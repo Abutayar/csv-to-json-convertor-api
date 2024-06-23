@@ -8,6 +8,7 @@ module.exports = {
     ],
     rules: {
       // Additional rules can be added here
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   };
   

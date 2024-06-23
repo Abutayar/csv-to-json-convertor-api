@@ -1,33 +1,8 @@
 import { Transform } from 'stream';
 import { Console } from 'console';
 
-export function createFlatObject(header: string[], data: string[]) {
-  return data.reduce((accumulator: any, currValue: any, currIndex) => {
-    return { ...accumulator, ...{ [header[currIndex]]: currValue } };
-  }, {});
-}
 
-export function convertToNestedObject(flatObject: Record<string, any>) {
-  const nestedObject: any = {};
-
-  for (const key in flatObject) {
-    const keys = key.split('.');
-    let current = nestedObject;
-
-    keys.forEach((k, i) => {
-      if (i === keys.length - 1) {
-        current[k] = flatObject[key];
-      } else {
-        current[k] = current[k] || {};
-        current = current[k];
-      }
-    });
-  }
-
-  return nestedObject;
-}
-
-export function printAsTable(input: any) {
+export function printAsTable(input: unknown) {
   // Create a transform stream for stdout
   const transformStream = new Transform({
     transform(chunk, _, callback) {
@@ -60,4 +35,29 @@ export function printAsTable(input: any) {
     formattedOutput += `${row}\n`;
   }
   console.log(formattedOutput);
+}
+
+export function logWithBorder(text: string) {
+  const length = text.length + 4;
+  const line = '─ '.repeat(length / 2);
+  const spaceCount = (line.length - 1) - (text.length);
+  console.log('┌' + line + '┐');
+
+  console.log('│ ' + text + ' '.repeat(spaceCount)+'│');
+
+  console.log('└' + line + '┘');
+}
+
+export function loaderAnimation() {
+  const frames = ['-', '\\', '|', '/'];
+  let i = 0;
+
+  const id = setInterval(() => {
+    process.stdout.write('\r' + frames[i]);
+    i = (i + 1) % frames.length;
+  }, 100);
+
+  return () => {
+    clearInterval(id)
+  }
 }

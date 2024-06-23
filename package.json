@@ -3,26 +3,32 @@
   "version": "1.0.0",
   "description": "Kelp - Coding Challenge – Backend Developer",
   "main": "src/app.ts",
+  "engines": {
+    "node": ">=20.6.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc --build",
     "start": "node --env-file=.env ./dist/app.js",
     "dev": "nodemon --exec node -r ts-node/register --env-file=.env ./src/app.ts",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
     "@typescript-eslint/eslint-plugin": "^7.13.1",
     "@typescript-eslint/parser": "^7.13.1",
     "eslint": "^8.57.0",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.3",
+    "ts-jest": "^29.1.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "postgres": "^3.4.4"
   }
 }

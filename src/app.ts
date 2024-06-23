@@ -1,34 +1,65 @@
-import path from 'path';
+import { PostgresDatabase } from './lib/postgre-db';
+import { StreamProcessor } from './lib/stream-processor';
+import { DB_CONFIG } from './db_config';
 
-import { LineBasedFileTransformationStream } from './lib/line-based-file-transform-stream';
-import { DistributionRecorder } from './lib/distribution-recorder';
-import { convertToNestedObject, createFlatObject } from './lib/utils';
-import { AGE_GROUP_DISTRIBUTION_MAP } from './data/age-distribution';
-
-const header: string[] = [];
-
-function csvLineProcessor(line: string, lineNo: number) {
-  if (lineNo === 1) {
-    header.push(...line.split(','));
-    return null; // Return null for the header line
-  }
-  const flatObj = createFlatObject(header, line.split(','));
-  const finalObj = convertToNestedObject(flatObj);
-  return JSON.stringify(finalObj);
-}
+import { loaderAnimation, logWithBorder, printAsTable } from './helper/utils';
+import { CSVToJSONConvertor } from './lib/csv-to-json-convertor';
 
 const CSV_FILE: string = process.env.CSV_FILE_PATH || '';
 if (CSV_FILE) {
-  const filePath = path.join(__dirname, '../', CSV_FILE);
-  const csvToJsonStream = new LineBasedFileTransformationStream(filePath, csvLineProcessor);
-  const distributionRecorder = new DistributionRecorder(AGE_GROUP_DISTRIBUTION_MAP);
+  const database = new PostgresDatabase(DB_CONFIG);
+  try {
+    processCsvFile(CSV_FILE, database);
+  } catch (error) {
+    console.error('APP ERROR', error);
+  }
+}
 
-  csvToJsonStream.on('data', (chunk: Buffer) => {
-    const json = JSON.parse(chunk.toString());
-    distributionRecorder.addRecord(json.age);
-  });
+function dataTranformer(data: any) {
+  const { name, age, address, ...additional_info } = data;
+  return {
+    name: `${name.firstName} ${name.lastName}`,
+    age,
+    address,
+    additional_info,
+  };
+}
 
-  csvToJsonStream.on('end', () => {
-    distributionRecorder.printRecords('Age-Group', ' % Distribution');
+function processCsvFile(filePath: string, database: PostgresDatabase) {
+  const closeLoader = loaderAnimation();
+  const tableName = 'users';
+  const csvTojsonConvertor = new CSVToJSONConvertor(filePath);
+
+  const UPLOAD_BATCH_SIZE = parseInt(process.env.UPLOAD_BATCH_SIZE || '100');
+  const streamProcessor = new StreamProcessor(database, tableName, dataTranformer, UPLOAD_BATCH_SIZE);
+
+  streamProcessor.processStream(csvTojsonConvertor.toJSONStream(), async (error, count) => {
+    closeLoader();
+
+    logWithBorder('Total record inserted ' + count);
+
+    if (error) {
+      console.error('File Processing failed with\n', error);
+      return;
+    }
+
+    const ageGroups = [
+      { label: '< 20', condition: '< 20' },
+      { label: '20 to 40', condition: 'BETWEEN 20 AND 40' },
+      { label: '40 to 60', condition: 'BETWEEN 40 AND 60' },
+      { label: '> 60', condition: '> 60' },
+    ];
+
+    const ageGroupDistribution = (await database.getPercentageDistribution(tableName, 'age', ageGroups)).map((record) => ({
+      'Age-Group': record.label,
+      '% Distribution': record.percentage,
+    }));
+
+    console.log('\nBelow is the Report');
+    console.log('─'.repeat(30));
+
+    printAsTable(ageGroupDistribution);
+
+    await database.end();
   });
 }
