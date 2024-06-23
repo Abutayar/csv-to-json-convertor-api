@@ -90,7 +90,7 @@ The project includes the following npm scripts for development, testing, and pro
 - `PGDATABASE`: Name of the PostgreSQL database you want to connect to.
 - `PGUSER`: Username for accessing the PostgreSQL database.
 - `PGPASSWORD`: Password associated with the username.
-- `ENDPOINT_ID`: Endpoint ID for your application (optional).
+- `ENDPOINT_ID`: Endpoint for PostgreSQL.
 - `CSV_FILE_PATH`: Path to the CSV file that you want to load into your application.
 - `UPLOAD_BATCH_SIZE`: Number of records to process in each batch.
 
