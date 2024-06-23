@@ -5,7 +5,7 @@ This Node.js application loads CSV data into a PostgreSQL database table, transf
 
 ## Requirements
 
-- Node.js (version >= 12.0.0)
+- Node.js (version >= 20.6.0)
 - PostgreSQL database
 
 ## Installation
